@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Interactiva: Instalación de Aberturas RPT + DVH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Chosen Palette: Construction & Safety - Slate (Neutral), Blue (Process), Amber (Warning/Decision), Emerald (Success/Start), Red (Error/NC) -->
+    <!-- Application Structure Plan: 
+         1. Header: Context and Introduction.
+         2. Tab Navigation: Switch between "Explorador del Proceso" (Learning) and "Inspector Virtual" (Testing/Simulating) and "Análisis de Riesgos" (Overview).
+         3. Process Explorer: A vertical timeline (Metro Map style) generated from the linear flow. Clicking steps reveals the specific actions and logic from the source.
+         4. Virtual Inspector: A step-by-step wizard that forces the user to answer the diamond-decisions from the flowchart. It demonstrates the consequences of failure (NC, FMEA).
+         5. Dashboard: Charts visualizing the breakdown of the process (Inspection nodes vs Action nodes).
+    -->
+    <!-- Visualization & Content Choices:
+         - Metro Map Timeline (HTML/CSS): Represents the sequential flow clearly on mobile/desktop without the clutter of a complex arrow diagram.
+         - Virtual Inspector (JS Logic): Gamifies the decision diamonds (E, G, K, M, R, T, X, Z4) to teach the error handling protocols.
+         - Risk Analysis Chart (Chart.js): Bar chart showing "Number of Quality Checks per Phase" to visually identify the most critical stages (Sellado, Funcionamiento).
+         - Status Indicators: CSS-based UI elements to replace static flowchart symbols.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; }
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 600px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            height: 300px; 
+            max-height: 400px; 
+        }
+        .step-card { transition: all 0.3s ease; }
+        .step-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .timeline-line { position: absolute; left: 24px; top: 0; bottom: 0; width: 4px; background-color: #cbd5e1; z-index: 0; }
+        .timeline-node { z-index: 10; }
+        
+        /* Custom Scrollbar for inner content */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Navigation / Header -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold tracking-tight">Proceso de Instalación RPT + DVH</h1>
+                <p class="text-slate-400 text-sm">Basado en Normativa UNIT - Control de Calidad y Trazabilidad</p>
+            </div>
+            <nav class="mt-4 md:mt-0 flex space-x-2">
+                <button onclick="switchTab('explorer')" id="btn-explorer" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-500 transition shadow-md">Explorar Proceso</button>
+                <button onclick="switchTab('inspector')" id="btn-inspector" class="px-4 py-2 rounded-lg bg-slate-700 text-slate-200 font-medium hover:bg-slate-600 transition">Inspector Virtual</button>
+                <button onclick="switchTab('analytics')" id="btn-analytics" class="px-4 py-2 rounded-lg bg-slate-700 text-slate-200 font-medium hover:bg-slate-600 transition">Análisis de Riesgos</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+
+        <!-- INTRO SECTION -->
+        <section class="mb-8 bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+            <h2 class="text-lg font-bold text-slate-900 mb-2">Acerca de este Manual Interactivo</h2>
+            <p class="text-slate-600 leading-relaxed">
+                Este aplicativo digitaliza el diagrama de flujo oficial para la instalación de aberturas con Ruptura de Puente Térmico (RPT) y Doble Vidrio Hermético (DVH). 
+                Su objetivo es asegurar la <strong>trazabilidad</strong> y la identificación de <strong>oportunidades de mejora</strong>. 
+                Utilice las pestañas superiores para navegar entre la vista detallada del flujo, una simulación de inspección y el análisis de puntos críticos.
+            </p>
+        </section>
+
+        <!-- VIEW 1: PROCESS EXPLORER (Metro Map) -->
+        <div id="view-explorer" class="fade-in block">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left: Interactive Timeline -->
+                <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-6 h-fit sticky top-24">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">Fases</span>
+                        Etapas del Flujo
+                    </h3>
+                    <div class="relative pl-2">
+                        <div class="timeline-line"></div>
+                        <div id="timeline-container" class="space-y-6">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Detail Card -->
+                <div class="lg:col-span-2">
+                    <div id="detail-card" class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden sticky top-24">
+                        <div class="bg-slate-50 p-6 border-b border-slate-200">
+                            <h2 id="detail-title" class="text-2xl font-bold text-slate-800">Seleccione una etapa</h2>
+                            <span id="detail-type" class="inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold bg-slate-200 text-slate-600">Inicio</span>
+                        </div>
+                        <div class="p-6">
+                            <div class="mb-6">
+                                <h4 class="text-sm font-uppercase text-slate-500 font-bold tracking-wider mb-2">DESCRIPCIÓN DE ACTIVIDADES</h4>
+                                <p id="detail-desc" class="text-slate-700 text-lg leading-relaxed">Haga clic en los círculos de la izquierda para ver los detalles de cada paso, las verificaciones requeridas y las acciones en caso de error.</p>
+                            </div>
+                            
+                            <div id="detail-actions-container" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                    <h5 class="font-bold text-blue-800 mb-2">✅ Acciones Clave</h5>
+                                    <ul id="detail-actions-list" class="list-disc list-inside text-slate-700 space-y-1"></ul>
+                                </div>
+                                <div class="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                                    <h5 class="font-bold text-amber-800 mb-2">⚠️ Puntos de Control</h5>
+                                    <ul id="detail-checks-list" class="list-disc list-inside text-slate-700 space-y-1"></ul>
+                                </div>
+                            </div>
+
+                            <div id="detail-docs" class="hidden bg-slate-100 p-4 rounded-lg">
+                                <h5 class="font-bold text-slate-700 flex items-center">
+                                    <span class="mr-2">📝</span> Documentación Requerida
+                                </h5>
+                                <p class="text-slate-600 mt-1">Este paso requiere firma en la <strong>Hoja de Control de Proceso</strong>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: VIRTUAL INSPECTOR (Simulation) -->
+        <div id="view-inspector" class="hidden fade-in">
+            <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold">Inspector de Calidad Virtual</h2>
+                        <p class="text-slate-400 text-sm">Simule el proceso de toma de decisiones en obra.</p>
+                    </div>
+                    <div class="bg-slate-800 px-4 py-2 rounded text-xl font-mono" id="inspector-step-counter">Paso 1</div>
+                </div>
+
+                <div class="p-8">
+                    <!-- Dynamic Question Area -->
+                    <div id="inspector-content" class="min-h-[300px] flex flex-col justify-center items-center text-center">
+                        <div class="mb-6">
+                            <span class="text-5xl mb-4 block">📦</span>
+                            <h3 class="text-2xl font-bold text-slate-800 mb-2">Recepción de Aberturas</h3>
+                            <p class="text-slate-600 max-w-lg mx-auto">Comienza el proceso. Se reciben las aberturas en obra. Se debe realizar el chequeo de dimensiones y la inspección visual de la perfilería.</p>
+                        </div>
+                        <button onclick="nextInspectorStep(1)" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105">
+                            Iniciar Inspección
+                        </button>
+                    </div>
+
+                    <!-- Feedback Area (Hidden by default) -->
+                    <div id="inspector-feedback" class="hidden mt-6 p-4 rounded-lg border">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                
+                <div class="bg-slate-50 p-4 border-t border-slate-200 text-center">
+                    <button onclick="resetInspector()" class="text-slate-500 hover:text-slate-800 text-sm font-medium underline">Reiniciar Simulación</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: ANALYTICS (Charts) -->
+        <div id="view-analytics" class="hidden fade-in">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Chart 1: Critical Control Points -->
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Densidad de Puntos de Control</h3>
+                    <p class="text-sm text-slate-500 mb-4">Cantidad de decisiones críticas (Rombos en el diagrama) por fase. Las fases con más decisiones requieren mayor supervisión.</p>
+                    <div class="chart-container">
+                        <canvas id="chart-risks"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Task Distribution -->
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Distribución de Tipos de Tarea</h3>
+                    <p class="text-sm text-slate-500 mb-4">Proporción de actividades en el flujo: Acciones físicas vs. Decisiones de Control vs. Gestión de Errores.</p>
+                    <div class="chart-container">
+                        <canvas id="chart-types"></canvas>
+                    </div>
+                </div>
+
+                <!-- Info Block: NC Protocol -->
+                <div class="md:col-span-2 bg-red-50 p-6 rounded-xl border border-red-100">
+                    <h3 class="text-lg font-bold text-red-800 mb-2 flex items-center">
+                        <span class="text-2xl mr-2">🚨</span> Protocolo de No Conformidad (NC)
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-4 rounded shadow-sm">
+                            <h4 class="font-bold text-red-700">1. Registro Inmediato</h4>
+                            <p class="text-sm text-slate-600">Cualquier "No" en una decisión crítica debe registrarse inmediatamente en el formato de NC.</p>
+                        </div>
+                        <div class="bg-white p-4 rounded shadow-sm">
+                            <h4 class="font-bold text-red-700">2. Análisis FMEA</h4>
+                            <p class="text-sm text-slate-600">Se debe realizar un Análisis de Modo y Efecto de Fallo para identificar la causa raíz y evitar recurrencia.</p>
+                        </div>
+                        <div class="bg-white p-4 rounded shadow-sm">
+                            <h4 class="font-bold text-red-700">3. Detención del Flujo</h4>
+                            <p class="text-sm text-slate-600">El proceso para esa unidad se detiene ("Fin") hasta que se resuelva la no conformidad administrativa y técnicamente.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-100 border-t border-slate-200 mt-12 py-8">
+        <div class="container mx-auto px-4 text-center text-slate-500 text-sm">
+            <p class="mb-2">Diagrama basado en proceso estándar UNIT.</p>
+            <p>La calidad visible es responsabilidad de todos los involucrados en la instalación.</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA STRUCTURE ---
+        // Represents the Source Flowchart Logic
+        const phases = [
+            {
+                id: "recepcion",
+                title: "Recepción y Chequeo",
+                icon: "📦",
+                steps: [
+                    "1. Recepción de Aberturas",
+                    "2. Chequeo de Dimensiones",
+                    "3. Inspección Visual de Perfilería"
+                ],
+                checks: [],
+                docs: true,
+                color: "bg-emerald-500"
+            },
+            {
+                id: "vano",
+                title: "Preparación Vano/Hueco",
+                icon: "🏗️",
+                steps: [
+                    "4. Chequeo de Dimensiones de Vano"
+                ],
+                checks: [
+                    "5. ¿Vano/Hueco Correcto? (Si no: Ajustar)",
+                    "6. ¿Ajuste OK? (Si no: NC)"
+                ],
+                docs: false,
+                color: "bg-blue-500"
+            },
+            {
+                id: "marco",
+                title: "Instalación de Marco",
+                icon: "📐",
+                steps: [
+                    "7. Colocación a Plomo/Nivel/Escuadra",
+                    "8. Fijación Mecánica",
+                    "9. Sellado Exterior/Interior"
+                ],
+                checks: [
+                    "10. ¿Sellado Correcto? (Si no: Resellar)",
+                    "11. ¿Resellado OK? (Si no: NC)"
+                ],
+                docs: true,
+                color: "bg-indigo-500"
+            },
+            {
+                id: "hojas",
+                title: "Hojas y Vidrios",
+                icon: "🪟",
+                steps: [
+                    "12. Colocación de Hoja/Paño Fijo",
+                    "13. Colocación de DVH y Cuñas",
+                    "14. Acristalado, Burletes y Parches"
+                ],
+                checks: [],
+                docs: true,
+                color: "bg-violet-500"
+            },
+            {
+                id: "func",
+                title: "Funcionamiento",
+                icon: "⚙️",
+                steps: [
+                    "15. Chequeo de Funcionamiento"
+                ],
+                checks: [
+                    "16. ¿Funcionamiento OK? (Si no: Ajustar)",
+                    "17. ¿Ajuste OK? (Si no: NC)"
+                ],
+                docs: false,
+                color: "bg-fuchsia-500"
+            },
+            {
+                id: "final",
+                title: "Entrega Final",
+                icon: "✨",
+                steps: [
+                    "18. Retiro de Protecciones",
+                    "19. Limpieza Final",
+                    "20. Control de Calidad Final"
+                ],
+                checks: [
+                    "21. ¿Control Final OK? (Si no: Acciones Correctivas)",
+                    "22. ¿Acciones Correctivas OK? (Si no: NC)"
+                ],
+                docs: true,
+                color: "bg-emerald-600"
+            }
+        ];
+
+        // Simulation Logic Nodes
+        const simulationNodes = [
+            {
+                id: 1,
+                question: "Recepción: ¿Las dimensiones de la abertura coinciden con el pedido?",
+                yesNext: 2,
+                noNext: "NC_Recep",
+                type: "decision"
+            },
+            {
+                id: 2,
+                question: "Paso 5: ¿Las dimensiones del Vano/Hueco son correctas?",
+                yesNext: 4, // Skip adjust
+                noNext: 3, // Go to adjust
+                type: "decision"
+            },
+            {
+                id: 3,
+                question: "Paso 6: Se realizó el ajuste del Vano. ¿Quedó conforme a especificación?",
+                yesNext: 4,
+                noNext: "NC_Vano",
+                type: "correction"
+            },
+            {
+                id: 4,
+                question: "Paso 10: Se aplicó sellado. ¿El sellado es continuo y hermético?",
+                yesNext: 6,
+                noNext: 5,
+                type: "decision"
+            },
+            {
+                id: 5,
+                question: "Paso 11: Se realizó el resellado. ¿Quedó conforme?",
+                yesNext: 6,
+                noNext: "NC_Sello",
+                type: "correction"
+            },
+            {
+                id: 6,
+                question: "Paso 16: ¿La hoja abre, cierra y traba suavemente?",
+                yesNext: 8,
+                noNext: 7,
+                type: "decision"
+            },
+            {
+                id: 7,
+                question: "Paso 17: Se ajustaron los herrajes. ¿El funcionamiento es correcto ahora?",
+                yesNext: 8,
+                noNext: "NC_Func",
+                type: "correction"
+            },
+            {
+                id: 8,
+                question: "Paso 21: Control de Calidad Final. ¿La abertura está limpia, sin daños y funciona?",
+                yesNext: "SUCCESS",
+                noNext: 9,
+                type: "decision"
+            },
+            {
+                id: 9,
+                question: "Paso 22: Se aplicaron acciones correctivas. ¿Pasó el control?",
+                yesNext: "SUCCESS",
+                noNext: "NC_Final",
+                type: "correction"
+            }
+        ];
+
+        // --- UI LOGIC ---
+
+        function switchTab(tabId) {
+            // Hide all views
+            ['explorer', 'inspector', 'analytics'].forEach(id => {
+                document.getElementById(`view-${id}`).classList.add('hidden');
+                document.getElementById(`btn-${id}`).classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+                document.getElementById(`btn-${id}`).classList.add('bg-slate-700', 'text-slate-200');
+            });
+
+            // Show selected view
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            document.getElementById(`btn-${tabId}`).classList.remove('bg-slate-700', 'text-slate-200');
+            document.getElementById(`btn-${tabId}`).classList.add('bg-blue-600', 'text-white', 'shadow-md');
+
+            // Trigger chart render if analytics tab
+            if (tabId === 'analytics') {
+                renderCharts();
+            }
+        }
+
+        function initTimeline() {
+            const container = document.getElementById('timeline-container');
+            container.innerHTML = '';
+
+            phases.forEach((phase, index) => {
+                const node = document.createElement('div');
+                node.className = 'timeline-node relative flex items-center cursor-pointer group';
+                node.onclick = () => showPhaseDetails(index);
+
+                node.innerHTML = `
+                    <div class="w-12 h-12 rounded-full ${phase.color} text-white flex items-center justify-center text-xl shadow-md z-10 border-4 border-white transition-transform group-hover:scale-110">
+                        ${phase.icon}
+                    </div>
+                    <div class="ml-4 flex-1 p-3 rounded-lg hover:bg-slate-50 transition">
+                        <h4 class="font-bold text-slate-700">${phase.title}</h4>
+                        <p class="text-xs text-slate-500">${phase.steps.length} Pasos, ${phase.checks.length} Controles</p>
+                    </div>
+                `;
+                container.appendChild(node);
+            });
+            
+            // Show first by default
+            showPhaseDetails(0);
+        }
+
+        function showPhaseDetails(index) {
+            const phase = phases[index];
+            const card = document.getElementById('detail-card');
+            
+            document.getElementById('detail-title').innerText = phase.title;
+            document.getElementById('detail-type').innerText = `Fase ${index + 1} de ${phases.length}`;
+            document.getElementById('detail-desc').innerText = "Esta fase comprende las siguientes actividades críticas del diagrama de flujo:";
+            
+            // Actions
+            const actionsContainer = document.getElementById('detail-actions-container');
+            const actionsList = document.getElementById('detail-actions-list');
+            const checksList = document.getElementById('detail-checks-list');
+            
+            actionsContainer.classList.remove('hidden');
+            actionsList.innerHTML = phase.steps.map(s => `<li>${s}</li>`).join('');
+            
+            if (phase.checks.length > 0) {
+                checksList.innerHTML = phase.checks.map(c => `<li>${c}</li>`).join('');
+                checksList.parentElement.classList.remove('hidden');
+            } else {
+                checksList.parentElement.classList.add('hidden');
+            }
+
+            // Docs
+            const docsDiv = document.getElementById('detail-docs');
+            if (phase.docs) {
+                docsDiv.classList.remove('hidden');
+            } else {
+                docsDiv.classList.add('hidden');
+            }
+        }
+
+        // --- INSPECTOR LOGIC ---
+        function nextInspectorStep(stepId) {
+            const contentDiv = document.getElementById('inspector-content');
+            
+            if (stepId === "SUCCESS") {
+                showInspectorResult("success");
+                return;
+            }
+            if (typeof stepId === "string" && stepId.startsWith("NC")) {
+                showInspectorResult("failure", stepId);
+                return;
+            }
+
+            const step = simulationNodes.find(n => n.id === stepId);
+            if (!step) return;
+
+            // Render Question
+            let html = `
+                <div class="fade-in">
+                    <div class="inline-block p-3 rounded-full ${step.type === 'correction' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'} mb-4 text-3xl">
+                        ${step.type === 'correction' ? '🔧' : '❓'}
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-6">${step.question}</h3>
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="nextInspectorStep(${step.yesNext})" class="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-bold shadow transition">
+                            ${step.type === 'correction' ? 'Conforme' : 'Sí, Correcto'}
+                        </button>
+                        <button onclick="nextInspectorStep('${step.noNext}')" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold shadow transition">
+                            ${step.type === 'correction' ? 'No Conforme' : 'No, Defectuoso'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            contentDiv.innerHTML = html;
+            document.getElementById('inspector-step-counter').innerText = `Nodo ${stepId}`;
+        }
+
+        function showInspectorResult(type, code) {
+            const contentDiv = document.getElementById('inspector-content');
+            let html = '';
+            
+            if (type === 'success') {
+                html = `
+                    <div class="fade-in">
+                        <div class="text-6xl mb-4">✅</div>
+                        <h3 class="text-2xl font-bold text-emerald-600 mb-2">¡Proceso Completado con Éxito!</h3>
+                        <p class="text-slate-600">La instalación ha pasado todos los controles de calidad.</p>
+                        <p class="text-sm text-slate-400 mt-2">Fin del Proceso (Nodo 23)</p>
+                    </div>
+                `;
+            } else {
+                html = `
+                    <div class="fade-in">
+                        <div class="text-6xl mb-4">🚫</div>
+                        <h3 class="text-2xl font-bold text-red-600 mb-2">NO CONFORMIDAD DETECTADA</h3>
+                        <p class="text-slate-800 font-bold mb-2">Código: ${code}</p>
+                        <div class="bg-red-50 p-4 rounded text-left max-w-md mx-auto border border-red-200">
+                            <h4 class="font-bold text-red-800 text-sm">Protocolo Requerido:</h4>
+                            <ul class="list-decimal list-inside text-sm text-red-700 mt-2">
+                                <li>Registrar en formato de NC.</li>
+                                <li>Realizar FMEA (Análisis de Causa Raíz).</li>
+                                <li>Detener proceso para esta unidad.</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            contentDiv.innerHTML = html;
+        }
+
+        function resetInspector() {
+            document.getElementById('inspector-content').innerHTML = `
+                <div class="mb-6 fade-in">
+                    <span class="text-5xl mb-4 block">📦</span>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-2">Recepción de Aberturas</h3>
+                    <p class="text-slate-600 max-w-lg mx-auto">Comienza el proceso. Se reciben las aberturas en obra.</p>
+                </div>
+                <button onclick="nextInspectorStep(1)" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105">
+                    Iniciar Inspección
+                </button>
+            `;
+            document.getElementById('inspector-step-counter').innerText = "Inicio";
+        }
+
+        // --- CHARTS LOGIC ---
+        let chartsRendered = false;
+        function renderCharts() {
+            if (chartsRendered) return;
+            
+            // Risk Chart
+            const ctxRisk = document.getElementById('chart-risks').getContext('2d');
+            new Chart(ctxRisk, {
+                type: 'bar',
+                data: {
+                    labels: ['Vano/Hueco', 'Sellado', 'Funcionamiento', 'Final'],
+                    datasets: [{
+                        label: 'Puntos de Decisión (Rombos)',
+                        data: [2, 2, 2, 2], // Count of diamonds in diagram per phase
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.6)',
+                            'rgba(245, 158, 11, 0.6)',
+                            'rgba(168, 85, 247, 0.6)',
+                            'rgba(16, 185, 129, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(245, 158, 11)',
+                            'rgb(168, 85, 247)',
+                            'rgb(16, 185, 129)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 4, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+
+            // Type Chart
+            const ctxType = document.getElementById('chart-types').getContext('2d');
+            new Chart(ctxType, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Acciones de Instalación', 'Decisiones de Control', 'Bucles de Corrección', 'Registros NC'],
+                    datasets: [{
+                        data: [11, 8, 4, 4], // Counts derived from flowchart nodes
+                        backgroundColor: [
+                            '#3b82f6', // Blue
+                            '#f59e0b', // Amber
+                            '#10b981', // Emerald
+                            '#ef4444'  // Red
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+
+            chartsRendered = true;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initTimeline();
+        });
+
+    </script>
+</body>
+</html>

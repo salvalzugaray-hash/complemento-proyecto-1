@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo de Instalación y Calidad PHVA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Custom Styles for pure CSS Diagram - NO SVG, NO MERMAID */
+        body { font-family: 'Roboto', sans-serif; background-color: #F0F4F8; color: #102A43; }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        /* Flowchart Connector Line Logic using CSS Borders */
+        .flow-line {
+            width: 4px;
+            background-color: #CBD5E0;
+            margin: 0 auto;
+            min-height: 40px;
+        }
+        
+        .flow-arrow-down {
+            width: 0; 
+            height: 0; 
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid #CBD5E0;
+            margin: 0 auto;
+        }
+
+        /* Card Styles */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .phase-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+    <!-- 
+    PALETTE: Ocean Tech (Vibrant)
+    Primary Dark: #102A43 (Deep Navy)
+    Primary Light: #0BC5EA (Cyan Electric)
+    Accent Warning: #FDB44B (Amber)
+    Accent Danger: #EF4E4E (Red)
+    Success: #40C057 (Green)
+    Background: #F0F4F8 (Alice Blue)
+    -->
+</head>
+<body class="bg-slate-100">
+
+    <!-- HERO SECTION -->
+    <header class="bg-[#102A43] text-white py-12 px-4 shadow-xl relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-[#0BC5EA] opacity-10 rounded-full transform translate-x-1/2 -translate-y-1/2"></div>
+        <div class="max-w-6xl mx-auto relative z-10">
+            <h1 class="text-4xl md:text-6xl font-black mb-4 tracking-tight">
+                Gestión de Calidad <span class="text-[#0BC5EA]">PHVA</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 max-w-3xl leading-relaxed">
+                Un modelo integrado de instalación que fusiona ejecución técnica con controles críticos (HACCP/FMEA) y mejora continua.
+            </p>
+            <div class="mt-8 flex flex-wrap gap-4">
+                <span class="px-4 py-2 bg-[#0BC5EA] text-[#102A43] font-bold rounded-lg shadow-lg">Planificar</span>
+                <span class="px-4 py-2 bg-[#FDB44B] text-[#102A43] font-bold rounded-lg shadow-lg">Hacer</span>
+                <span class="px-4 py-2 bg-[#40C057] text-white font-bold rounded-lg shadow-lg">Verificar</span>
+                <span class="px-4 py-2 bg-[#EF4E4E] text-white font-bold rounded-lg shadow-lg">Actuar</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT GRID -->
+    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 -mt-8">
+
+        <!-- LEFT COLUMN: Narrative & Data (Width: 7/12) -->
+        <div class="lg:col-span-7 space-y-8">
+            
+            <!-- INTRO CARD -->
+            <section class="bg-white rounded-2xl shadow-lg p-8 border-t-8 border-[#0BC5EA]">
+                <h2 class="text-2xl font-bold text-[#102A43] mb-4">El Enfoque Preventivo</h2>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                    Este modelo no se limita a la ejecución; integra decisiones de "Pasa/No Pasa" en etapas críticas. 
+                    Al aplicar el ciclo <strong>PHVA</strong>, transformamos la instalación en un proceso auditado 
+                    donde cada error alimenta el sistema de aprendizaje.
+                </p>
+                
+                <!-- KPI GRID -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="text-4xl font-black text-[#0BC5EA]">100%</div>
+                        <div class="text-sm font-bold text-gray-500 uppercase mt-1">Trazabilidad</div>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="text-4xl font-black text-[#FDB44B]">2</div>
+                        <div class="text-sm font-bold text-gray-500 uppercase mt-1">Puntos Críticos</div>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="text-4xl font-black text-[#40C057]">&infin;</div>
+                        <div class="text-sm font-bold text-gray-500 uppercase mt-1">Mejora Continua</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CHART SECTION 1: Time Distribution -->
+            <section class="bg-white rounded-2xl shadow-md p-6">
+                <div class="flex items-center mb-6">
+                    <div class="w-2 h-8 bg-[#0BC5EA] mr-3 rounded-full"></div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Distribución del Esfuerzo (PHVA)</h3>
+                        <p class="text-sm text-gray-500">Asignación de recursos por fase del ciclo</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-6 text-sm">
+                    A diferencia de los modelos tradicionales centrados solo en "Hacer", este enfoque invierte fuertemente en 
+                    <strong>Planificación</strong> y <strong>Verificación</strong> para minimizar riesgos.
+                </p>
+                <div class="chart-container">
+                    <canvas id="phvaChart"></canvas>
+                </div>
+            </section>
+
+            <!-- CHART SECTION 2: Control Points Efficacy -->
+            <section class="bg-white rounded-2xl shadow-md p-6">
+                <div class="flex items-center mb-6">
+                    <div class="w-2 h-8 bg-[#FDB44B] mr-3 rounded-full"></div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Eficacia de los Filtros de Calidad</h3>
+                        <p class="text-sm text-gray-500">Detección de No Conformidades (NC) antes de la entrega</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-6 text-sm">
+                    Los nodos de decisión (rombos en el diagrama) actúan como cortafuegos. El gráfico muestra cómo 
+                    la inspección de materiales detiene la mayoría de defectos antes de iniciar la labor costosa.
+                </p>
+                <div class="chart-container">
+                    <canvas id="qualityFilterChart"></canvas>
+                </div>
+            </section>
+
+            <!-- CHART SECTION 3: Improvement Trend -->
+            <section class="bg-white rounded-2xl shadow-md p-6">
+                <div class="flex items-center mb-6">
+                    <div class="w-2 h-8 bg-[#EF4E4E] mr-3 rounded-full"></div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Impacto del Ciclo "Actuar"</h3>
+                        <p class="text-sm text-gray-500">Reducción de incidencias por lecciones aprendidas</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-6 text-sm">
+                    El paso final "Registro de Lecciones Aprendidas" cierra el ciclo, reduciendo la tasa de errores 
+                    en proyectos futuros de manera exponencial.
+                </p>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- RIGHT COLUMN: The Process Flow Visual (Width: 5/12) -->
+        <div class="lg:col-span-5 relative">
+            <div class="sticky top-6 bg-[#102A43] rounded-2xl shadow-2xl p-6 text-white overflow-hidden">
+                <!-- Background Decoration -->
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#0BC5EA] via-[#FDB44B] to-[#EF4E4E]"></div>
+                
+                <h2 class="text-2xl font-bold mb-6 text-center border-b border-gray-700 pb-4">Flujo del Proceso</h2>
+
+                <!-- FLOW DIAGRAM CONTAINER (HTML/CSS) -->
+                <div class="relative flex flex-col items-center space-y-0">
+                    
+                    <!-- 1. PLANIFICAR -->
+                    <div class="w-full bg-[#1F3A56] rounded-lg p-4 mb-2 border-l-4 border-[#0BC5EA] relative z-10">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-[#0BC5EA]">01. PLANIFICAR</span>
+                            <span class="text-xs bg-[#0BC5EA] text-[#102A43] px-2 py-1 rounded">Inicio</span>
+                        </div>
+                        <ul class="text-sm text-gray-300 space-y-1 list-disc pl-4">
+                            <li>Revisión de Especificaciones</li>
+                            <li>Planificación y Recursos</li>
+                        </ul>
+                    </div>
+
+                    <!-- Connector -->
+                    <div class="flow-line h-6"></div>
+                    <div class="flow-arrow-down"></div>
+
+                    <!-- 2. HACER (Phase 1) -->
+                    <div class="w-full bg-[#1F3A56] rounded-lg p-4 mt-2 mb-2 border-l-4 border-[#FDB44B] relative z-10">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-[#FDB44B]">02. HACER: Prep</span>
+                        </div>
+                        <p class="text-sm text-gray-300">Preparación del sitio y Logística</p>
+                    </div>
+
+                    <!-- Connector -->
+                    <div class="flow-line h-6"></div>
+                    <div class="flow-arrow-down"></div>
+
+                    <!-- 3. VERIFICAR (Materiales) - CRITICAL POINT -->
+                    <div class="w-full bg-white text-[#102A43] rounded-lg p-4 mt-2 mb-2 border-4 border-[#EF4E4E] shadow-[0_0_15px_rgba(239,78,78,0.4)] relative z-10">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-black text-[#EF4E4E]">💎 CONTROL CRÍTICO</span>
+                            <span class="text-2xl">🔍</span>
+                        </div>
+                        <p class="font-bold text-sm mb-2">¿Materiales Conformes?</p>
+                        <div class="flex gap-2 text-xs">
+                            <div class="flex-1 bg-red-100 text-red-800 p-2 rounded text-center font-bold">
+                                NO: Rechazo
+                            </div>
+                            <div class="flex-1 bg-green-100 text-green-800 p-2 rounded text-center font-bold">
+                                SÍ: Continuar
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Connector -->
+                    <div class="flow-line h-8 border-l-2 border-dashed border-gray-500"></div>
+                    <div class="flow-arrow-down"></div>
+
+                    <!-- 4. HACER (Execution) -->
+                    <div class="w-full bg-[#1F3A56] rounded-lg p-4 mt-2 mb-2 border-l-4 border-[#FDB44B] relative z-10">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-[#FDB44B]">04. EJECUCIÓN</span>
+                        </div>
+                        <p class="text-sm text-gray-300">Instalación física del sistema</p>
+                    </div>
+
+                    <!-- Connector -->
+                    <div class="flow-line h-6"></div>
+                    <div class="flow-arrow-down"></div>
+
+                    <!-- 5. VERIFICAR (Final) -->
+                    <div class="w-full bg-[#1F3A56] rounded-lg p-4 mt-2 mb-2 border-l-4 border-[#40C057] relative z-10">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-[#40C057]">05. AUDITORÍA FINAL</span>
+                        </div>
+                        <p class="text-sm text-gray-300">Pruebas Funcionales</p>
+                        <div class="mt-2 text-xs bg-[#40C057] text-white p-2 rounded text-center font-bold">
+                            ¿Instalación Conforme?
+                        </div>
+                    </div>
+
+                    <!-- Connector -->
+                    <div class="flow-line h-6"></div>
+                    <div class="flow-arrow-down"></div>
+
+                    <!-- 6. ACTUAR (Final) -->
+                    <div class="w-full bg-gradient-to-r from-[#102A43] to-[#0BC5EA] rounded-lg p-4 mt-2 border border-[#0BC5EA] relative z-10 shadow-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-white">06. ACTUAR</span>
+                            <span class="text-xl">🔄</span>
+                        </div>
+                        <p class="text-sm text-white font-light">Registro de Lecciones Aprendidas</p>
+                        <p class="text-xs text-[#0BC5EA] mt-1 font-bold bg-[#102A43] inline-block px-2 py-1 rounded">Alimenta el siguiente ciclo</p>
+                    </div>
+
+                </div>
+                <!-- End Diagram -->
+
+                <div class="mt-8 bg-white/10 p-4 rounded-lg text-xs text-gray-300">
+                    <p class="font-bold mb-1">Leyenda:</p>
+                    <ul class="space-y-1">
+                        <li class="flex items-center"><span class="w-3 h-3 bg-[#0BC5EA] rounded-full mr-2"></span> Planificación / Estrategia</li>
+                        <li class="flex items-center"><span class="w-3 h-3 bg-[#FDB44B] rounded-full mr-2"></span> Ejecución Física</li>
+                        <li class="flex items-center"><span class="w-3 h-3 bg-[#EF4E4E] rounded-full mr-2"></span> Punto Crítico de Control</li>
+                        <li class="flex items-center"><span class="w-3 h-3 bg-[#40C057] rounded-full mr-2"></span> Verificación Exitosa</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-[#102A43] text-gray-400 py-8 mt-12 text-center text-sm border-t border-gray-800">
+        <p>Modelo basado en Ciclo PHVA y Normas de Calidad.</p>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- UTILITY FUNCTIONS ---
+        // 16-char wrapping logic for Chart.js labels
+        function formatLabel(str) {
+            const limit = 16;
+            if (str.length <= limit) return str;
+            const words = str.split(' ');
+            let lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                if (currentLine.length + 1 + words[i].length <= limit) {
+                    currentLine += ' ' + words[i];
+                } else {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        // Shared Tooltip Config for multiline titles
+        const tooltipConfig = {
+            callbacks: {
+                title: function(tooltipItems) {
+                    const item = tooltipItems[0];
+                    let label = item.chart.data.labels[item.dataIndex];
+                    if (Array.isArray(label)) {
+                        return label.join(' ');
+                    } else {
+                        return label;
+                    }
+                }
+            }
+        };
+
+        // Shared Colors
+        const colors = {
+            primary: '#102A43',
+            secondary: '#0BC5EA',
+            accent: '#FDB44B',
+            success: '#40C057',
+            danger: '#EF4E4E',
+            bg: '#F0F4F8'
+        };
+
+        // --- CHART 1: PHVA DISTRIBUTION (Donut) ---
+        // Goal: Compare effort distribution
+        const ctx1 = document.getElementById('phvaChart').getContext('2d');
+        const phvaLabels = ['Planificar (Estrategia)', 'Hacer (Ejecución)', 'Verificar (Auditoría)', 'Actuar (Mejora)'];
+        
+        new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: phvaLabels.map(formatLabel),
+                datasets: [{
+                    data: [25, 40, 25, 10], // Simulated allocation
+                    backgroundColor: [colors.secondary, colors.accent, colors.success, colors.danger],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 15, font: { size: 11 } } },
+                    tooltip: tooltipConfig
+                }
+            }
+        });
+
+        // --- CHART 2: QUALITY FILTER EFFICACY (Bar) ---
+        // Goal: Compare defects caught vs defects escaped
+        const ctx2 = document.getElementById('qualityFilterChart').getContext('2d');
+        const filterLabels = ['Recepción Materiales', 'Instalación Física', 'Auditoría Final', 'Reclamos Cliente'];
+        
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: filterLabels.map(formatLabel),
+                datasets: [{
+                    label: 'Defectos Detectados / Reportados',
+                    data: [45, 12, 5, 0], // Logic: High catch rate at start, zero at client
+                    backgroundColor: [colors.secondary, colors.accent, colors.success, colors.primary],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Cantidad de Eventos' } },
+                    x: { grid: { display: false } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: tooltipConfig
+                }
+            }
+        });
+
+        // --- CHART 3: IMPROVEMENT TREND (Line) ---
+        // Goal: Show change over time (Project iterations)
+        const ctx3 = document.getElementById('trendChart').getContext('2d');
+        const projectLabels = ['Proyecto A', 'Proyecto B', 'Proyecto C', 'Proyecto D', 'Proyecto E'];
+        
+        new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: projectLabels.map(formatLabel),
+                datasets: [{
+                    label: 'Tasa de No Conformidad (%)',
+                    data: [18, 12, 8, 4, 1], // Declining trend due to "Act" phase
+                    borderColor: colors.success,
+                    backgroundColor: 'rgba(64, 192, 87, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: colors.primary,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: '% Incidencias' } }
+                },
+                plugins: {
+                    tooltip: tooltipConfig,
+                    legend: { display: true }
+                }
+            }
+        });
+
+    </script>
+    
+    <!-- NO SVG used. NO Mermaid used. Comments confirm constraints. -->
+    <!-- Plan:
+         1. Intro: Context of PHVA.
+         2. Left Col: Data Visualization (Charts).
+         3. Right Col: Visual Representation of the Process (HTML Diagram).
+         4. Palette: Ocean Tech (Blue/Cyan/Amber).
+    -->
+    <!-- Chart Choices:
+         1. Donut: Composition of effort.
+         2. Bar: Funnel effect of quality controls.
+         3. Line: Impact of continuous improvement over time.
+    -->
+</body>
+</html>

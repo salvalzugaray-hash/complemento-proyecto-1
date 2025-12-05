@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo de Gestión de Calidad e Instalación (PHVA)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: Slate (Neutral) + Emerald (Success) + Amber (Warning/Decision) + Rose (Error) + Blue (Planning) -->
+    <!-- Application Structure Plan: 
+         1. Header: Introduction to the Model (PHVA context).
+         2. Interactive Process Map: A visually reconstructed flowchart using HTML/CSS Grid (No SVG/Mermaid) that allows users to click nodes for definitions (HACCP, FMEA).
+         3. Simulation Console: An interactive "Step-through" module where the user acts as the Quality Manager, making decisions (Conform/Not Conform) to see how the flow reacts.
+         4. Performance Dashboard: Visualizes hypothetical data derived from this process model (e.g., Non-conformity rates, Cycle times) to demonstrate the value of the "Check" and "Act" phases.
+         5. Key Concepts Reference: Detailed cards for PHVA, HACCP, FMEA.
+         
+         Reasoning: This structure moves from conceptual understanding (Map) to practical application (Simulation) to result analysis (Dashboard), mirroring the PHVA cycle itself.
+    -->
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        
+        /* Chart Container Styling as per requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Flowchart Node Styling */
+        .flow-node {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .flow-node:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .connector-line {
+            width: 2px;
+            background-color: #cbd5e1;
+            margin: 0 auto;
+        }
+        
+        .active-step {
+            ring: 4px solid #3b82f6;
+            background-color: #eff6ff !important;
+        }
+    </style>
+    
+    <!-- Visualization & Content Choices:
+         1. Interactive Flow Map (HTML Grid): Replaces static image. Goal: Explore the logic. Interaction: Click to reveal details about PCCs and steps.
+         2. Simulation Console (JS Logic): Goal: Experience the "Decision" nodes. Interaction: Buttons for "Approve/Reject".
+         3. Doughnut Chart (Chart.js): Shows Material vs. Execution conformity rates. Goal: Visualize the impact of steps 3 & 4 vs 8 & 9.
+         4. Bar Chart (Chart.js): Types of Non-Conformities (HACCP/FMEA categories). Goal: Show what "Analysis" (Step 14) looks like.
+         5. Line Chart (Chart.js): Continuous Improvement trend. Goal: Visualize the "Act" phase impact over time.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Header Section -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Gestión de Calidad e Instalación</h1>
+                <p class="text-sm text-slate-500">Modelo Integrado PHVA con Controles Críticos (HACCP/FMEA)</p>
+            </div>
+            <div class="hidden md:block">
+                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">Unidad Temática 5</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- Intro -->
+        <section class="max-w-3xl mx-auto text-center">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">El Ciclo de la Calidad</h2>
+            <p class="text-lg text-slate-600 leading-relaxed">
+                Este panel interactivo desglosa el <strong>Proceso de Instalación</strong> bajo el enfoque de <strong>Mejora Continua (PHVA)</strong>. 
+                A diferencia de un proceso lineal tradicional, este modelo integra puntos de decisión críticos ("¿Conforme?") 
+                y bucles de retroalimentación que garantizan que la calidad no solo se controle, sino que se gestione activamente 
+                antes de finalizar el proyecto.
+            </p>
+        </section>
+
+        <!-- SECTION 1: INTERACTIVE PROCESS MAP -->
+        <section id="process-map-section" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="border-b border-slate-100 pb-4 mb-6">
+                <h3 class="text-xl font-bold text-slate-800">1. Mapa Interactivo del Proceso</h3>
+                <p class="text-slate-500 mt-2">
+                    Explore el flujo lógico del proceso. Haga clic en los nodos para ver detalles sobre los Puntos de Control Crítico (PCC) y las herramientas de calidad aplicadas.
+                    Observe cómo los bucles de retroalimentación (líneas punteadas en teoría) reconectan las correcciones con la verificación.
+                </p>
+            </div>
+
+            <!-- Grid Layout for Flowchart -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+                
+                <!-- PHASE 1: PLANIFICAR -->
+                <div class="md:col-span-1 space-y-4">
+                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2 border-b border-blue-200 pb-1">Planificar</div>
+                    
+                    <div onclick="showDetail(1)" id="node-1" class="flow-node bg-blue-50 border-l-4 border-blue-500 p-4 rounded shadow-sm">
+                        <div class="font-bold text-sm text-blue-900">1. Inicio</div>
+                    </div>
+                    
+                    <div class="h-6 w-0 border-l-2 border-slate-300 mx-auto"></div>
+                    
+                    <div onclick="showDetail(2)" id="node-2" class="flow-node bg-blue-50 border-l-4 border-blue-500 p-4 rounded shadow-sm">
+                        <div class="font-bold text-sm text-blue-900">2. Planificación</div>
+                        <div class="text-xs text-blue-700 mt-1">Requisitos iniciales</div>
+                    </div>
+                </div>
+
+                <!-- PHASE 2: HACER (Control de Materiales) -->
+                <div class="md:col-span-1 space-y-4 mt-8 md:mt-0">
+                    <div class="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-2 border-b border-indigo-200 pb-1">Hacer / Control</div>
+                    
+                    <div class="hidden md:block h-20 w-0 border-l-2 border-slate-300 mx-auto -mt-10 mb-2 transform -rotate-45 origin-bottom-left absolute left-[25%] top-[140px]"></div>
+
+                    <div onclick="showDetail(3)" id="node-3" class="flow-node bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded shadow-sm">
+                        <div class="font-bold text-sm text-indigo-900">3. Revisión Materiales</div>
+                        <div class="text-xs text-indigo-700 mt-1 font-mono">PCC: HACCP/FMEA</div>
+                    </div>
+                    
+                    <div class="h-6 w-0 border-l-2 border-slate-300 mx-auto"></div>
+                    
+                    <!-- DECISION NODE -->
+                    <div onclick="showDetail(4)" id="node-4" class="flow-node bg-amber-50 border-2 border-amber-400 p-4 rounded-lg text-center transform rotate-0 shadow-sm relative">
+                        <div class="font-bold text-sm text-amber-900">4. ¿Conforme?</div>
+                        
+                        <!-- NO path visualization -->
+                        <div class="absolute top-1/2 -right-6 w-6 h-0.5 bg-rose-400"></div>
+                        <div class="absolute top-1/2 -right-20 text-xs font-bold text-rose-600 bg-white px-1">NO</div>
+                    </div>
+
+                    <!-- NO CONFORMITY LOOP SIDEBAR (Visual only for desktop layout) -->
+                    <div class="hidden md:flex flex-col absolute left-[45%] top-[250px] w-48 p-3 bg-rose-50 border border-rose-200 rounded text-xs space-y-2">
+                        <div class="font-bold text-rose-800">Ruta de No Conformidad</div>
+                        <div class="bg-white p-2 border border-rose-100 rounded">5. Gestión NC</div>
+                        <div class="text-center text-rose-300">↓</div>
+                        <div class="bg-white p-2 border border-rose-100 rounded">6. Ajuste/Prov.</div>
+                        <div class="text-center text-rose-300">⟲ (Retorno a 3)</div>
+                    </div>
+                    
+                    <div class="h-6 w-0 border-l-2 border-slate-300 mx-auto"></div>
+
+                    <div onclick="showDetail(7)" id="node-7" class="flow-node bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded shadow-sm">
+                        <div class="font-bold text-sm text-emerald-900">7. Ejecución (HACER)</div>
+                        <div class="text-xs text-emerald-700 mt-1">Instalación física</div>
+                    </div>
+                </div>
+
+                <!-- PHASE 3: VERIFICAR -->
+                <div class="md:col-span-1 space-y-4 mt-8 md:mt-0">
+                    <div class="text-xs font-bold uppercase tracking-wider text-purple-600 mb-2 border-b border-purple-200 pb-1">Verificar</div>
+
+                    <div onclick="showDetail(8)" id="node-8" class="flow-node bg-purple-50 border-l-4 border-purple-500 p-4 rounded shadow-sm mt-32">
+                        <div class="font-bold text-sm text-purple-900">8. Verif. Ejecución</div>
+                        <div class="text-xs text-purple-700 mt-1">Auditoría en sitio</div>
+                    </div>
+
+                    <div class="h-6 w-0 border-l-2 border-slate-300 mx-auto"></div>
+
+                    <!-- DECISION NODE 2 -->
+                    <div onclick="showDetail(9)" id="node-9" class="flow-node bg-amber-50 border-2 border-amber-400 p-4 rounded-lg text-center shadow-sm relative">
+                        <div class="font-bold text-sm text-amber-900">9. ¿Ejec. Conforme?</div>
+                         <!-- NO path visualization -->
+                         <div class="absolute top-1/2 -right-6 w-6 h-0.5 bg-rose-400"></div>
+                         <div class="absolute top-1/2 -right-20 text-xs font-bold text-rose-600 bg-white px-1">NO</div>
+                    </div>
+                    
+                    <!-- CORRECTION LOOP SIDEBAR -->
+                    <div class="hidden md:flex flex-col absolute left-[70%] top-[300px] w-48 p-3 bg-rose-50 border border-rose-200 rounded text-xs space-y-2">
+                        <div class="font-bold text-rose-800">Corrección Inmediata</div>
+                        <div class="bg-white p-2 border border-rose-100 rounded">10. Re-ejecución</div>
+                        <div class="text-center text-rose-300">⟲ (Retorno a 8)</div>
+                    </div>
+
+                    <div class="h-6 w-0 border-l-2 border-slate-300 mx-auto"></div>
+
+                    <div onclick="showDetail(11)" id="node-11" class="flow-node bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded shadow-sm">
+                        <div class="font-bold text-sm text-emerald-900">11. Pruebas Finales</div>
+                        <div class="text-xs text-emerald-700 mt-1">Aceptación</div>
+                    </div>
+                </div>
+
+                <!-- PHASE 4: ACTUAR -->
+                <div class="md:col-span-1 space-y-4 mt-8 md:mt-0">
+                    <div class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-2 border-b border-teal-200 pb-1">Actuar / Mejora</div>
+                    
+                    <div onclick="showDetail(12)" id="node-12" class="flow-node bg-teal-50 border-l-4 border-teal-500 p-4 rounded shadow-sm mt-60">
+                        <div class="font-bold text-sm text-teal-900">12. Doc. y Cierre</div>
+                    </div>
+                    <div class="h-4 w-0 border-l-2 border-slate-300 mx-auto"></div>
+                    <div onclick="showDetail(13)" id="node-13" class="flow-node bg-teal-50 border-l-4 border-teal-500 p-4 rounded shadow-sm">
+                        <div class="font-bold text-sm text-teal-900">13. Reporte Calidad</div>
+                    </div>
+                    <div class="h-4 w-0 border-l-2 border-slate-300 mx-auto"></div>
+                    <div onclick="showDetail(14)" id="node-14" class="flow-node bg-teal-100 border-l-4 border-teal-600 p-4 rounded shadow-md ring-2 ring-teal-200">
+                        <div class="font-bold text-sm text-teal-900">14. Lecciones Aprendidas</div>
+                        <div class="text-xs text-teal-700 mt-1">Mejora Continua</div>
+                    </div>
+                    <div class="h-4 w-0 border-l-2 border-slate-300 mx-auto"></div>
+                    <div onclick="showDetail(15)" id="node-15" class="flow-node bg-slate-100 border-l-4 border-slate-500 p-4 rounded shadow-sm">
+                        <div class="font-bold text-sm text-slate-900">15. Fin / SGC</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Panel (Dynamic Content) -->
+            <div id="detail-panel" class="mt-8 bg-slate-50 rounded-lg p-6 border border-slate-200 transition-all duration-300 opacity-0 hidden">
+                <h4 id="detail-title" class="text-lg font-bold text-slate-800 mb-2"></h4>
+                <p id="detail-desc" class="text-slate-600 mb-3"></p>
+                <div id="detail-extra" class="text-sm bg-white p-3 rounded border border-slate-200 text-slate-500 font-mono"></div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: SIMULATION CONSOLE -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
+                <div class="mb-4">
+                    <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <span class="text-2xl">🎮</span> Simulador de Calidad
+                    </h3>
+                    <p class="text-slate-500 text-sm mt-1">
+                        Asuma el rol de Inspector. Tome decisiones en los puntos críticos para ver cómo el modelo maneja las desviaciones.
+                    </p>
+                </div>
+                
+                <div class="flex-grow bg-slate-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-y-auto h-64 mb-4 shadow-inner" id="sim-console">
+                    <div class="text-slate-500 border-b border-slate-700 pb-2 mb-2">System Initialized: Quality_Model_v1.0</div>
+                    <div class="mb-2">> Esperando inicio...</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3" id="sim-controls">
+                    <button onclick="startSimulation()" class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">
+                        Iniciar Nuevo Proceso
+                    </button>
+                    <!-- Decision buttons (hidden initially) -->
+                    <button id="btn-approve" onclick="simDecision(true)" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded transition-colors">
+                        ✅ Conforme
+                    </button>
+                    <button id="btn-reject" onclick="simDecision(false)" class="hidden bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded transition-colors">
+                        ❌ No Conforme
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION 3: PHVA EXPLANATION (Static Content) -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">Conceptos Clave del Reporte</h3>
+                <div class="space-y-4">
+                    <div class="group border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                        <h4 class="font-bold text-blue-800 mb-1 flex justify-between">
+                            PCC (Punto de Control Crítico)
+                            <span class="text-xs bg-blue-100 px-2 py-0.5 rounded text-blue-800">Pasos 3 y 8</span>
+                        </h4>
+                        <p class="text-sm text-slate-600">
+                            Momentos en el proceso donde se <strong>debe</strong> aplicar un control para prevenir, eliminar o reducir un riesgo a niveles aceptables. Basado en HACCP (p. 69).
+                        </p>
+                    </div>
+
+                    <div class="group border border-slate-200 rounded-lg p-4 hover:border-indigo-300 transition-colors">
+                        <h4 class="font-bold text-indigo-800 mb-1">HACCP & FMEA</h4>
+                        <p class="text-sm text-slate-600">
+                            <strong>HACCP:</strong> Análisis de Peligros y Puntos Críticos de Control. Enfoque preventivo.<br>
+                            <strong>FMEA:</strong> Análisis del Modo y Efecto de Fallas (p. 70). Identifica fallos potenciales antes de que ocurran.
+                        </p>
+                    </div>
+
+                    <div class="group border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
+                        <h4 class="font-bold text-teal-800 mb-1 flex justify-between">
+                            Cierre del Ciclo (Actuar)
+                            <span class="text-xs bg-teal-100 px-2 py-0.5 rounded text-teal-800">Pasos 14 y 15</span>
+                        </h4>
+                        <p class="text-sm text-slate-600">
+                            La etapa final no es solo terminar el trabajo, sino registrar <strong>lecciones aprendidas</strong> para mejorar el SGC (Sistema de Gestión de Calidad) futuro.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: PERFORMANCE DASHBOARD -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="border-b border-slate-100 pb-4 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800">Panel de Resultados (Simulado)</h3>
+                    <p class="text-slate-500 mt-1">Datos hipotéticos que demuestran la eficacia de los controles PCC implementados.</p>
+                </div>
+                <div class="flex space-x-2">
+                     <button onclick="randomizeData()" class="text-sm text-blue-600 hover:text-blue-800 underline">Actualizar Datos</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- Chart 1: Material vs Execution Defects -->
+                <div class="flex flex-col">
+                    <h4 class="text-sm font-semibold text-slate-700 mb-4 text-center">Tasa de Conformidad (Materiales vs Ejecución)</h4>
+                    <div class="chart-container">
+                        <canvas id="conformityChart"></canvas>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2 text-center">Muestra dónde se detiene el flujo con mayor frecuencia (Paso 4 vs 9).</p>
+                </div>
+
+                <!-- Chart 2: Types of Non-Conformities -->
+                <div class="flex flex-col">
+                    <h4 class="text-sm font-semibold text-slate-700 mb-4 text-center">Tipos de No Conformidades (Análisis FMEA)</h4>
+                    <div class="chart-container">
+                        <canvas id="defectsChart"></canvas>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2 text-center">Categorización necesaria para el paso 14 (Lecciones Aprendidas).</p>
+                </div>
+
+                <!-- Chart 3: Improvement Trend -->
+                <div class="flex flex-col">
+                    <h4 class="text-sm font-semibold text-slate-700 mb-4 text-center">Reducción de Retrabajos (Mejora Continua)</h4>
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2 text-center">Impacto de integrar las Lecciones Aprendidas al SGC.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+            <p>Aplicación generada basada en la Unidad Temática 5 (Herramientas para el conocimiento de los procesos).</p>
+            <p class="mt-2 text-slate-500">© 2025 Modelo de Calidad - Ciclo PHVA</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA & STATE MANAGEMENT ---
+        
+        // Flowchart Data (Content from source)
+        const flowSteps = {
+            1: { title: "1. Inicio", desc: "Arranque formal del proceso de instalación.", extra: "Fase: Planificar" },
+            2: { title: "2. Planificación", desc: "Definición de requisitos técnicos, cronogramas y recursos necesarios.", extra: "Entrada del Ciclo PHVA" },
+            3: { title: "3. Revisión Materiales", desc: "Inspección rigurosa de insumos recibidos antes de usarlos. Aplicación de listas de chequeo.", extra: "⚠️ Punto de Control Crítico (PCC)" },
+            4: { title: "4. ¿Materiales Conforme?", desc: "Decisión binaria. Si falla, se activa el protocolo de No Conformidad para evitar instalar material defectuoso.", extra: "Compuerta de Calidad" },
+            5: { title: "5. Gestión de No Conformidad", desc: "Registro del defecto. Se etiqueta el material para impedir su uso accidental.", extra: "Gestión de Riesgos (ISO 9001)" },
+            6: { title: "6. Comunicación/Ajuste", desc: "Reclamo al proveedor o solicitud de reemplazo. El material nuevo debe volver a pasar por el Paso 3.", extra: "Loopback de Verificación" },
+            7: { title: "7. Ejecución de Instalación", desc: "Realización física del trabajo utilizando materiales aprobados.", extra: "Fase: Hacer" },
+            8: { title: "8. Verificación Ejecución", desc: "Auditoría en sitio del trabajo realizado contra los planos y normas.", extra: "⚠️ Punto de Control Crítico (PCC)" },
+            9: { title: "9. ¿Ejecución Conforme?", desc: "Evaluación del acabado y funcionalidad.", extra: "Compuerta de Calidad" },
+            10: { title: "10. Corrección Inmediata", desc: "Reparación o re-instalación de los elementos fallidos. Debe volver a verificarse (Paso 8).", extra: "Corrección vs Acción Correctiva" },
+            11: { title: "11. Pruebas y Aceptación", desc: "Pruebas de funcionamiento final con el cliente.", extra: "Validación Final" },
+            12: { title: "12. Documentación", desc: "Recopilación de firmas, manuales y garantías.", extra: "Cierre Administrativo" },
+            13: { title: "13. Reporte de Calidad", desc: "Consolidación de datos de la instalación.", extra: "Evidencia Objetiva" },
+            14: { title: "14. Lecciones Aprendidas", desc: "¿Qué salió mal? ¿Qué salió bien? Análisis para evitar errores futuros.", extra: "Fase: Actuar (Mejora Continua)" },
+            15: { title: "15. Integración SGC", desc: "Actualización de procedimientos estándar basados en lo aprendido.", extra: "Cierre del Ciclo" }
+        };
+
+        // --- INTERACTIVITY FUNCTIONS ---
+
+        // 1. Flowchart Interaction
+        function showDetail(stepId) {
+            const panel = document.getElementById('detail-panel');
+            const title = document.getElementById('detail-title');
+            const desc = document.getElementById('detail-desc');
+            const extra = document.getElementById('detail-extra');
+            const nodes = document.querySelectorAll('.flow-node');
+
+            // Reset styles
+            nodes.forEach(n => n.classList.remove('active-step'));
+            
+            // Highlight current
+            const activeNode = document.getElementById(`node-${stepId}`);
+            if(activeNode) activeNode.classList.add('active-step');
+
+            // Update Content
+            const data = flowSteps[stepId];
+            if(data) {
+                title.textContent = data.title;
+                desc.textContent = data.desc;
+                extra.textContent = data.extra;
+                
+                panel.classList.remove('hidden');
+                setTimeout(() => {
+                    panel.classList.remove('opacity-0');
+                }, 10);
+            }
+        }
+
+        // 2. Simulation Logic
+        let simState = 'idle'; 
+        const consoleDiv = document.getElementById('sim-console');
+        const btnApprove = document.getElementById('btn-approve');
+        const btnReject = document.getElementById('btn-reject');
+
+        function logToConsole(text, type = 'info') {
+            const p = document.createElement('div');
+            p.textContent = `> ${text}`;
+            p.className = "mb-1 " + (type === 'error' ? 'text-rose-400' : type === 'success' ? 'text-emerald-400' : 'text-slate-300');
+            consoleDiv.appendChild(p);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        function startSimulation() {
+            consoleDiv.innerHTML = '';
+            logToConsole("Iniciando Proceso de Instalación...", "info");
+            setTimeout(() => logToConsole("1. Inicio del Proyecto", "info"), 500);
+            setTimeout(() => logToConsole("2. Planificando recursos...", "info"), 1000);
+            setTimeout(() => {
+                logToConsole("3. Materiales Recibidos. SOLICITANDO INSPECCIÓN.", "warning");
+                promptDecision("material");
+            }, 2000);
+        }
+
+        function promptDecision(stage) {
+            simState = stage;
+            btnApprove.classList.remove('hidden');
+            btnReject.classList.remove('hidden');
+            logToConsole("⚠️ ACCIÓN REQUERIDA: ¿El resultado es Conforme?", "warning");
+        }
+
+        function simDecision(isConform) {
+            // Hide buttons temporarily
+            btnApprove.classList.add('hidden');
+            btnReject.classList.add('hidden');
+
+            if (simState === 'material') {
+                if (isConform) {
+                    logToConsole("✅ Material Aceptado. Avanzando a Ejecución.", "success");
+                    setTimeout(() => {
+                        logToConsole("7. Ejecutando instalación...", "info");
+                        setTimeout(() => {
+                            logToConsole("8. Instalación finalizada. SOLICITANDO AUDITORÍA.", "warning");
+                            promptDecision("execution");
+                        }, 1500);
+                    }, 1000);
+                } else {
+                    logToConsole("❌ Material Rechazado (No Conformidad Detectada).", "error");
+                    logToConsole("5. Iniciando Gestión de No Conformidad...", "error");
+                    logToConsole("6. Comunicando a Proveedor...", "info");
+                    setTimeout(() => {
+                        logToConsole("↺ Material de reemplazo recibido. Volviendo a inspección.", "warning");
+                        promptDecision("material");
+                    }, 2000);
+                }
+            } else if (simState === 'execution') {
+                if (isConform) {
+                    logToConsole("✅ Ejecución Aprobada.", "success");
+                    finishSimulation();
+                } else {
+                    logToConsole("❌ Fallo en instalación detectado.", "error");
+                    logToConsole("10. Realizando correcciones inmediatas...", "error");
+                    setTimeout(() => {
+                        logToConsole("↺ Re-auditando trabajo...", "warning");
+                        promptDecision("execution");
+                    }, 2000);
+                }
+            }
+        }
+
+        function finishSimulation() {
+            setTimeout(() => logToConsole("11. Pruebas Finales exitosas.", "success"), 500);
+            setTimeout(() => logToConsole("12. Documentación cerrada.", "info"), 1000);
+            setTimeout(() => logToConsole("14. Registrando Lecciones Aprendidas en SGC.", "info"), 1500);
+            setTimeout(() => logToConsole("🏆 PROCESO COMPLETADO EXITOSAMENTE.", "success"), 2000);
+        }
+
+        // 3. Charts Logic (Chart.js)
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+        });
+
+        let chart1, chart2, chart3;
+
+        function initCharts() {
+            // Chart 1: Conformity Rates (Doughnut)
+            const ctx1 = document.getElementById('conformityChart').getContext('2d');
+            chart1 = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Aprobado 1er Intento', 'Rechazo Materiales', 'Rechazo Ejecución'],
+                    datasets: [{
+                        data: [75, 15, 10],
+                        backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Chart 2: Defect Types (Bar)
+            const ctx2 = document.getElementById('defectsChart').getContext('2d');
+            chart2 = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Dimensiones', 'Daño Superficial', 'Faltantes', 'Error Montaje', 'Limpieza'],
+                    datasets: [{
+                        label: 'Frecuencia',
+                        data: [12, 8, 5, 15, 7],
+                        backgroundColor: '#6366f1',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Chart 3: Continuous Improvement (Line)
+            const ctx3 = document.getElementById('trendChart').getContext('2d');
+            chart3 = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5'],
+                    datasets: [{
+                        label: '% Retrabajos',
+                        data: [25, 20, 15, 8, 5],
+                        borderColor: '#0d9488',
+                        backgroundColor: 'rgba(13, 148, 136, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 30 } },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function randomizeData() {
+            // Simulate changing data to show dynamic nature
+            chart1.data.datasets[0].data = [Math.floor(Math.random()*20)+60, Math.floor(Math.random()*15)+5, Math.floor(Math.random()*15)+5];
+            chart1.update();
+
+            chart2.data.datasets[0].data = Array.from({length: 5}, () => Math.floor(Math.random() * 20));
+            chart2.update();
+
+            // Simulate improvement trend always going down slightly differently
+            let start = 30;
+            const trend = [];
+            for(let i=0; i<5; i++) {
+                start = Math.max(2, start - Math.floor(Math.random() * 8));
+                trend.push(start);
+            }
+            chart3.data.datasets[0].data = trend;
+            chart3.update();
+        }
+
+    </script>
+</body>
+</html>
