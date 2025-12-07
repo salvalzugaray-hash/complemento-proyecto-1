@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flujo Interactivo: Instalación de Aberturas RPT+DVH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .flow-node {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .flow-node:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .flow-diamond {
+            transform: rotate(-45deg);
+            width: 8rem;
+            height: 8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem auto;
+        }
+        .flow-diamond-text {
+            transform: rotate(45deg);
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .active-node {
+            border: 4px solid #3b82f6;
+            background-color: #eff6ff !important;
+        }
+
+        .checklist-item {
+            display: flex; 
+            align-items: flex-start; 
+            gap: 0.5rem; 
+            margin-bottom: 0.5rem;
+        }
+        .checklist-input {
+            margin-top: 0.25rem; 
+            height: 1rem; 
+            width: 1rem; 
+            border-radius: 0.25rem; 
+            border: 1px solid #94a3b8; 
+            color: #f59e0b; 
+            --tw-ring-color: #f59e0b;
+        }
+        .checklist-label {
+            font-size: 0.875rem; 
+            color: #475569;
+        }
+        .section-title {
+            font-weight: 700; 
+            color: #1e293b; 
+            margin-top: 1rem; 
+            margin-bottom: 0.5rem; 
+            font-size: 0.875rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em;
+        }
+        .form-row {
+            display: grid; 
+            grid-template-columns: repeat(1, minmax(0, 1fr)); 
+            gap: 0.5rem; 
+            margin-bottom: 0.75rem;
+        }
+        @media (min-width: 640px) {
+            .form-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        .form-col {
+            display: flex; 
+            flex-direction: column;
+        }
+        .form-label {
+            font-size: 0.75rem; 
+            font-weight: 500; 
+            color: #475569; 
+            margin-bottom: 0.25rem;
+        }
+        .form-input {
+            padding-left: 0.5rem; 
+            padding-right: 0.5rem; 
+            padding-top: 0.25rem; 
+            padding-bottom: 0.25rem; 
+            font-size: 0.875rem; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.25rem; 
+            outline: none;
+            transition: all 0.1s ease-in-out;
+        }
+        .form-input:focus {
+            --tw-ring-shadow: 0 0 0 1px #3b82f6;
+            box-shadow: var(--tw-ring-shadow), var(--tw-shadow);
+        }
+        .hidden-planilla {
+            display: none;
+        }
+        .btn-save {
+            margin-top: 0.75rem; 
+            background-color: #2563eb; 
+            color: #ffffff; 
+            font-size: 0.875rem; 
+            font-weight: 600; 
+            padding-top: 0.375rem; 
+            padding-bottom: 0.375rem; 
+            padding-left: 0.75rem; 
+            padding-right: 0.75rem; 
+            border-radius: 0.25rem;
+            transition: background-color 0.15s;
+        }
+        .btn-save:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-gray-100 border-b-4 border-blue-500 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
+            
+            <!-- NOMBRE DE LA EMPRESA -->
+            <div class="w-1/4 flex items-center justify-start">
+                <div class="text-left">
+                    <div class="text-xl font-black text-blue-900">TRINIDAD SRL</div>
+                    <div class="text-sm font-semibold text-slate-700">CONSTRUCCIONES</div>
+                </div>
+            </div>
+
+            <div class="flex-grow text-center">
+                <h1 class="text-3xl font-black text-blue-800 tracking-tight leading-snug">
+                    FLUJO DE TRABAJO RPT + DVH
+                </h1>
+                <p class="text-base text-slate-600 mt-1 font-medium">
+                    Control de Calidad y Trazabilidad de Instalaciones
+                </p>
+            </div>
+
+            <div id="team-members" class="w-1/4 text-right text-base text-slate-700 space-y-0.5">
+                <div class="text-base leading-snug">Juan Manuel Mata</div>
+                <div class="text-base leading-snug">Ernesto Alzugaray</div>
+                <div class="text-base leading-snug">Fernando Pereira</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <section class="max-w-4xl mx-auto text-center">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">Arquitectura del Proceso de Calidad</h2>
+            <p class="text-lg text-slate-600 leading-relaxed">
+                Este panel interactivo transforma el diagrama de flujo técnico en una guía paso a paso con controles reiterables y trazabilidad de errores.
+            </p>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
+                <h3 class="text-xl font-bold text-slate-800 mb-6 border-b border-slate-100 pb-2">1. Mapa de Flujo de Instalación</h3>
+                <div id="flow-container" class="space-y-4">
+                    <div id="node-0" onclick="showDetail(0)" class="flow-node bg-blue-50 border border-blue-200 p-3 rounded-full text-center font-bold text-blue-800 w-32 mx-auto">INICIO</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-1" onclick="showDetail(1)" class="flow-node bg-blue-100 border-l-4 border-blue-600 p-4 rounded text-center max-w-sm mx-auto">Recepción y verificación de materiales</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-D1" onclick="showDetail('D1')" class="flow-diamond bg-amber-200 border-2 border-amber-500 shadow-md">
+                        <div class="flow-diamond-text text-amber-900">¿Materiales Conformes?</div>
+                    </div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-2" onclick="showDetail(2)" class="flow-node bg-blue-100 border-l-4 border-blue-600 p-4 rounded text-center max-w-sm mx-auto">Preparación del vano (SÍ a D1)</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-D2" onclick="showDetail('D2')" class="flow-diamond bg-amber-200 border-2 border-amber-500 shadow-md">
+                        <div class="flow-diamond-text text-amber-900">¿Vano en condiciones?</div>
+                    </div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-3" onclick="showDetail(3)" class="flow-node bg-emerald-100 border-l-4 border-emerald-600 p-4 rounded text-center max-w-sm mx-auto">Instalación de premarco (si aplica) (SÍ a D2)</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-4" onclick="showDetail(4)" class="flow-node bg-emerald-100 border-l-4 border-emerald-600 p-4 rounded text-center max-w-sm mx-auto">Colocación de abertura RPT+DVH</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-5" onclick="showDetail(5)" class="flow-node bg-emerald-100 border-l-4 border-emerald-600 p-4 rounded text-center max-w-sm mx-auto">Nivelación y fijación mecánica</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-6" onclick="showDetail(6)" class="flow-node bg-emerald-100 border-l-4 border-emerald-600 p-4 rounded text-center max-w-sm mx-auto">Sellado perimetral (espuma + sellador)</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-7" onclick="showDetail(7)" class="flow-node bg-purple-100 border-l-4 border-purple-600 p-4 rounded text-center max-w-sm mx-auto">Prueba de estanqueidad (simulación de lluvia)</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-D3" onclick="showDetail('D3')" class="flow-diamond bg-amber-200 border-2 border-amber-500 shadow-md">
+                        <div class="flow-diamond-text text-amber-900">¿Pasa la prueba?</div>
+                    </div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-8" onclick="showDetail(8)" class="flow-node bg-emerald-100 border-l-4 border-emerald-600 p-4 rounded text-center max-w-sm mx-auto">Limpieza final y entrega (SÍ a D3)</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-9" onclick="showDetail(9)" class="flow-node bg-purple-100 border-l-4 border-purple-600 p-4 rounded text-center max-w-sm mx-auto">Verificación post-instalación (72 h)</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-D4" onclick="showDetail('D4')" class="flow-diamond bg-amber-200 border-2 border-amber-500 shadow-md">
+                        <div class="flow-diamond-text text-amber-900">¿Conforme a especificaciones?</div>
+                    </div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-10" onclick="showDetail(10)" class="flow-node bg-teal-100 border-l-4 border-teal-600 p-4 rounded text-center max-w-sm mx-auto">Registrar en planilla de control (SÍ a D4)</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-11" onclick="showDetail(11)" class="flow-node bg-teal-200 border-4 border-teal-600 p-4 rounded text-center max-w-sm mx-auto">Lecciones aprendidas → Mejora continua</div>
+                    <div class="h-6 w-0.5 bg-slate-300 mx-auto"></div>
+                    <div id="node-12" onclick="showDetail(12)" class="flow-node bg-slate-200 border border-slate-400 p-3 rounded-full text-center font-bold text-slate-800 w-32 mx-auto">FIN</div>
+                </div>
+            </div>
+            
+            <div class="lg:col-span-1 space-y-8 sticky top-20 h-full">
+                <div id="detail-panel" class="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                    <h4 id="detail-title" class="text-xl font-bold text-slate-900 mb-2">Seleccione un Paso</h4>
+                    <p id="detail-desc" class="text-slate-600 mb-4">Haga clic en cualquier actividad o rombo del mapa.</p>
+                    <div class="text-sm font-semibold text-slate-700">Tipo de Control:</div>
+                    <div id="detail-extra" class="text-sm bg-slate-100 p-3 rounded border border-slate-200 text-slate-500 font-mono mt-1">Simbología ISO 5807</div>
+                </div>
+
+                <div class="bg-slate-900 rounded-xl shadow-lg p-4 flex flex-col">
+                    <h3 class="text-sm font-bold text-white mb-2">Consola de Decisión / Trazabilidad</h3>
+                    <div class="text-xs text-slate-400">El historial de controles se guarda localmente en el navegador.</div>
+                </div>
+
+                <div id="control-sheet-title" class="hidden-planilla text-center font-bold text-slate-800 mb-2 text-sm">
+                    Planillas de Control
+                </div>
+
+                <div id="control-sheet-recepcion" class="hidden-planilla bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Planilla: Recepción de Aberturas</h4>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Proyecto</label><input type="text" class="form-input" id="rec-proyecto"></div>
+                        <div class="form-col"><label class="form-label">Ubicación</label><input type="text" class="form-input" id="rec-ubicacion"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Fecha</label><input type="datetime-local" class="form-input" id="rec-fecha"></div>
+                    </div>
+                    <div class="section-title">Controles (Marcar si está **Conforme**)</div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="rec-chk1" checked><label class="checklist-label">Dimensiones dentro de tolerancia</label></div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="rec-chk2" checked><label class="checklist-label">RPT y DVH sin daños</label></div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="rec-chk3" checked><label class="checklist-label">Herrajes y funcionamiento OK</label></div>
+                    <div class="mt-2"><label class="form-label">Observaciones</label><textarea class="form-input h-12" id="rec-obs"></textarea></div>
+                    <button class="btn-save" onclick="saveControl('recepcion')">Guardar control</button>
+                </div>
+
+                <div id="control-sheet-vanos" class="hidden-planilla bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Planilla: Control de Vanos</h4>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Proyecto</label><input type="text" class="form-input" id="van-proyecto"></div>
+                        <div class="form-col"><label class="form-label">Ubicación</label><input type="text" class="form-input" id="van-ubicacion"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Fecha</label><input type="datetime-local" class="form-input" id="van-fecha"></div>
+                    </div>
+                    <div class="section-title">Controles (Marcar si está **Conforme**)</div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="van-chk1" checked><label class="checklist-label">Aplomado y nivelación OK</label></div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="van-chk2" checked><label class="checklist-label">Limpieza y dimensiones correctas</label></div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="van-chk3" checked><label class="checklist-label">Condiciones de amurado OK</label></div>
+                    <div class="mt-2"><label class="form-label">Observaciones</label><textarea class="form-input h-12" id="van-obs"></textarea></div>
+                    <button class="btn-save" onclick="saveControl('vanos')">Guardar control</button>
+                </div>
+
+                <div id="control-sheet-premarco" class="hidden-planilla bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Planilla: Instalación de Premarco</h4>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Proyecto</label><input type="text" class="form-input" id="pre-proyecto"></div>
+                        <div class="form-col"><label class="form-label">Ubicación</label><input type="text" class="form-input" id="pre-ubicacion"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Fecha</label><input type="datetime-local" class="form-input" id="pre-fecha"></div>
+                    </div>
+                    <div class="section-title">Controles (Marcar si está **Conforme**)</div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="pre-chk1" checked><label class="checklist-label">Nivelado y aplomado</label></div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="pre-chk2" checked><label class="checklist-label">Fijación mecánica OK</label></div>
+                    <div class="mt-2"><label class="form-label">Observaciones</label><textarea class="form-input h-12" id="pre-obs"></textarea></div>
+                    <button class="btn-save" onclick="saveControl('premarco')">Guardar control</button>
+                </div>
+
+                <div id="control-sheet-colocacion" class="hidden-planilla bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Planilla: Colocación de Abertura</h4>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Proyecto</label><input type="text" class="form-input" id="col-proyecto"></div>
+                        <div class="form-col"><label class="form-label">Ubicación</label><input type="text" class="form-input" id="col-ubicacion"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Fecha</label><input type="datetime-local" class="form-input" id="col-fecha"></div>
+                    </div>
+                    <div class="section-title">Controles (Marcar si está **Conforme**)</div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="col-chk1" checked><label class="checklist-label">Centrado en vano</label></div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="col-chk2" checked><label class="checklist-label">Sin daños por manipulación</label></div>
+                    <div class="mt-2"><label class="form-label">Observaciones</label><textarea class="form-input h-12" id="col-obs"></textarea></div>
+                    <button class="btn-save" onclick="saveControl('colocacion')">Guardar control</button>
+                </div>
+
+                <div id="control-sheet-nivelacion" class="hidden-planilla bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Planilla: Nivelación y Fijación</h4>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Proyecto</label><input type="text" class="form-input" id="niv-proyecto"></div>
+                        <div class="form-col"><label class="form-label">Ubicación</label><input type="text" class="form-input" id="niv-ubicacion"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Fecha</label><input type="datetime-local" class="form-input" id="niv-fecha"></div>
+                    </div>
+                    <div class="section-title">Controles (Marcar si está **Conforme**)</div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="niv-chk1" checked><label class="checklist-label">Nivelación horizontal/vertical</label></div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="niv-chk2" checked><label class="checklist-label">Fijación inoxidable y espaciada</label></div>
+                    <div class="mt-2"><label class="form-label">Observaciones</label><textarea class="form-input h-12" id="niv-obs"></textarea></div>
+                    <button class="btn-save" onclick="saveControl('nivelacion')">Guardar control</button>
+                </div>
+
+                <div id="control-sheet-sellado" class="hidden-planilla bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Planilla: Sellado Perimetral</h4>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Proyecto</label><input type="text" class="form-input" id="sel-proyecto"></div>
+                        <div class="form-col"><label class="form-label">Ubicación</label><input type="text" class="form-input" id="sel-ubicacion"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Fecha</label><input type="datetime-local" class="form-input" id="sel-fecha"></div>
+                    </div>
+                    <div class="section-title">Controles (Marcar si está **Conforme**)</div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="sel-chk1" checked><label class="checklist-label">Espuma sin huecos</label></div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="sel-chk2" checked><label class="checklist-label">Sellador continuo y adherido</label></div>
+                    <div class="mt-2"><label class="form-label">Observaciones</label><textarea class="form-input h-12" id="sel-obs"></textarea></div>
+                    <button class="btn-save" onclick="saveControl('sellado')">Guardar control</button>
+                </div>
+
+                <div id="control-sheet-estanqueidad" class="hidden-planilla bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Planilla: Prueba de Estanqueidad</h4>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Proyecto</label><input type="text" class="form-input" id="est-proyecto"></div>
+                        <div class="form-col"><label class="form-label">Ubicación</label><input type="text" class="form-input" id="est-ubicacion"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label class="form-label">Fecha</label><input type="datetime-local" class="form-input" id="est-fecha"></div>
+                    </div>
+                    <div class="section-title">Resultados (Marcar si está **Conforme**)</div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="est-chk1" checked><label class="checklist-label">Sin filtraciones</label></div>
+                    <div class="checklist-item"><input type="checkbox" class="checklist-input" id="est-chk2" checked><label class="checklist-label">Desagües funcionando</label></div>
+                    <div class="mt-2"><label class="form-label">Observaciones / Fallas</label><textarea class="form-input h-16" id="est-obs"></textarea></div>
+                    <button class="btn-save" onclick="saveControl('estanqueidad')">Guardar control</button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 space-y-3">
+                    <button onclick="exportToCSV()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded text-sm">
+                        Exportar controles a CSV
+                    </button>
+                    <button onclick="clearSavedData()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm">
+                        🚨 Borrar TODOS los Controles
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <h3 class="text-xl font-bold text-slate-800 mb-4">2. Dashboard de Calidad</h3>
+            <p class="text-sm text-slate-600 mb-6">Visualización de la trazabilidad y la incidencia de errores en cada etapa del proceso.</p>
+            
+            <h4 class="text-lg font-semibold text-slate-700 mb-3">Conteo Total de Errores por Etapa (Gráfica de Barras)</h4>
+            <div class="chart-container"><canvas id="errorCountChart"></canvas></div>
+            
+            <hr class="my-8">
+            
+            <h4 class="text-lg font-semibold text-slate-700 mb-3">Tendencia de Errores a lo Largo del Tiempo (Gráfica de Líneas)</h4>
+            <div class="chart-container"><canvas id="errorTrendChart"></canvas></div> 
+        </section>
+    </main>
+    
+    <script>
+        // --- Mapeo de nodos a nombres y planillas asociadas ---
+        const stepDetails = {
+            0: { t: "INICIO", d: "Inicio del proceso.", extra: "TERMINADOR", sheet: null, next: 1 },
+            1: { t: "Recepción y verificación de materiales", d: "Verificar materiales RPT+DVH contra orden de compra, daños y dimensiones. **Guarde el control antes de continuar.**", extra: "PROCESO / PLANILLA", sheet: 'recepcion', next: 'D1' },
+            'D1': { t: "¿Materiales Conformes?", d: "Decisión: ¿Las aberturas cumplen con las especificaciones y no tienen daños graves? (Ver Planilla de Recepción)", extra: "DECISIÓN", sheet: null, yes: 2, no: 'ErrorD1' },
+            'ErrorD1': { t: "ERROR: Rechazo de Material", d: "Acción: Documentar la no conformidad y solicitar reposición.", extra: "ACCIÓN", sheet: null, next: 1 }, // Bucle de corrección
+            2: { t: "Preparación del vano", d: "Verificar limpieza, nivelación, aplomo y dimensiones del vano de albañilería. **Guarde el control antes de continuar.**", extra: "PROCESO / PLANILLA", sheet: 'vanos', next: 'D2' },
+            'D2': { t: "¿Vano en condiciones?", d: "Decisión: ¿El vano está limpio, nivelado, aplomado y listo para recibir la abertura/premarco?", extra: "DECISIÓN", sheet: null, yes: 3, no: 'ErrorD2' },
+            'ErrorD2': { t: "ERROR: Vano No Conforme", d: "Acción: Ejecutar tareas de mampostería o ajuste para acondicionar el vano. Repetir Paso 2.", extra: "ACCIÓN", sheet: null, next: 2 },
+            3: { t: "Instalación de premarco (si aplica)", d: "Colocar y fijar el premarco asegurando su nivelación y aplomo.", extra: "PROCESO / PLANILLA", sheet: 'premarco', next: 4 },
+            4: { t: "Colocación de abertura RPT+DVH", d: "Introducir el marco de la abertura en el vano o premarco, asegurando el centrado.", extra: "PROCESO / PLANILLA", sheet: 'colocacion', next: 5 },
+            5: { t: "Nivelación y fijación", d: "Asegurar abertura con nivelación y fijación mecánica.", extra: "PROCESO / PLANILLA", sheet: 'nivelacion', next: 6 },
+            6: { t: "Sellado perimetral", d: "Aplicar espuma de poliuretano y el sellador exterior/interior (silicona neutra o similar).", extra: "PROCESO / PLANILLA", sheet: 'sellado', next: 7 },
+            7: { t: "Prueba de estanqueidad (simulación de lluvia)", d: "Realizar una prueba de agua controlada para verificar la ausencia de filtraciones. **Guarde el control antes de continuar.**", extra: "CONTROL / PLANILLA", sheet: 'estanqueidad', next: 'D3' },
+            'D3': { t: "¿Pasa la prueba?", d: "Decisión: ¿La abertura y el sellado impiden la entrada de agua?", extra: "DECISIÓN", sheet: null, yes: 8, no: 'ErrorD3' },
+            'ErrorD3': { t: "ERROR: Falla de Estanqueidad", d: "Acción: Identificar y resellar los puntos de filtración. Repetir Paso 6 y 7.", extra: "ACCIÓN", sheet: null, next: 6 },
+            8: { t: "Limpieza final y entrega", d: "Remover residuos y entregar.", extra: "PROCESO", sheet: null, next: 9 },
+            9: { t: "Verificación post-instalación (72 h)", d: "Inspección a las 72h.", extra: "CONTROL", sheet: null, next: 'D4' },
+            'D4': { t: "¿Conforme a especificaciones?", d: "Decisión: ¿La instalación final es aceptada por la inspección de obra/cliente?", extra: "DECISIÓN", sheet: null, yes: 10, no: 'ErrorD4' },
+            'ErrorD4': { t: "ERROR: No Conformidad Final", d: "Acción: Documentar la falla (ej. ajuste de herrajes) y ejecutar la corrección. Repetir Paso 9.", extra: "ACCIÓN", sheet: null, next: 9 },
+            10: { t: "Registrar en planilla de control", d: "Documentar conformidad.", extra: "DOCUMENTO", sheet: null, next: 11 },
+            11: { t: "Lecciones aprendidas", d: "Análisis para mejora continua.", extra: "PROCESO", sheet: null, next: 12 },
+            12: { t: "FIN", d: "Proceso completado.", extra: "TERMINADOR", sheet: null }
+        };
+
+        // Etiquetas cortas para la GRÁFICA DE BARRAS (primera gráfica)
+        const stepLabels = [
+            "Recepción",
+            "Vanos",
+            "Premarco",
+            "Colocación",
+            "Nivelación",
+            "Sellado",
+            "Estanqueidad"
+        ];
+        // Colores para las líneas de la segunda gráfica
+        const stepColors = [
+            '#ef4444', // Red (Recepción)
+            '#f97316', // Orange (Vanos)
+            '#eab308', // Yellow (Premarco)
+            '#22c55e', // Green (Colocación)
+            '#06b6d4', // Cyan (Nivelación)
+            '#3b82f6', // Blue (Sellado)
+            '#8b5cf6'  // Violet (Estanqueidad)
+        ];
+
+        // --- Almacenamiento ---
+        let savedControls = [];
+
+        // --- Guardar control ---
+        function saveControl(stepKey) {
+            const stepIndex = {
+                'recepcion': 0,
+                'vanos': 1,
+                'premarco': 2,
+                'colocacion': 3,
+                'nivelacion': 4,
+                'sellado': 5,
+                'estanqueidad': 6
+            }[stepKey];
+
+            const fields = {
+                'recepcion': ['rec-proyecto', 'rec-ubicacion', 'rec-fecha', 'rec-obs', ['rec-chk1', 'rec-chk2', 'rec-chk3']],
+                'vanos': ['van-proyecto', 'van-ubicacion', 'van-fecha', 'van-obs', ['van-chk1', 'van-chk2', 'van-chk3']],
+                'premarco': ['pre-proyecto', 'pre-ubicacion', 'pre-fecha', 'pre-obs', ['pre-chk1', 'pre-chk2']],
+                'colocacion': ['col-proyecto', 'col-ubicacion', 'col-fecha', 'col-obs', ['col-chk1', 'col-chk2']],
+                'nivelacion': ['niv-proyecto', 'niv-ubicacion', 'niv-fecha', 'niv-obs', ['niv-chk1', 'niv-chk2']],
+                'sellado': ['sel-proyecto', 'sel-ubicacion', 'sel-fecha', 'sel-obs', ['sel-chk1', 'sel-chk2']],
+                'estanqueidad': ['est-proyecto', 'est-ubicacion', 'est-fecha', 'est-obs', ['est-chk1', 'est-chk2']]
+            }[stepKey];
+
+            const [proyecto, ubicacion, fecha, observaciones, checkIds] = fields;
+            
+            // Recolectar estado de los checkboxes. True = Conforme, False = No Conforme/Error.
+            const checks = checkIds.map(id => document.getElementById(id).checked);
+            
+            // Contar cuántos fallaron (No Checked == Falló)
+            const errorCount = checks.filter(c => !c).length; 
+            const hasError = errorCount > 0;
+
+            const control = {
+                id: Date.now().toString(),
+                step: stepKey,
+                stepIndex,
+                fecha: document.getElementById(fecha).value || new Date().toISOString().slice(0, 16),
+                proyecto: document.getElementById(proyecto).value,
+                ubicacion: document.getElementById(ubicacion).value,
+                observaciones: document.getElementById(observaciones).value,
+                // Generar la lista de errores solo para los que NO están marcados (c == false)
+                errores: checks.map((ok, i) => !ok ? `${stepKey.toUpperCase()} - Control ${i + 1} fallido` : null).filter(e => e),
+                errorCount: errorCount, 
+                hasError: hasError
+            };
+
+            savedControls.push(control);
+            localStorage.setItem('savedControls', JSON.stringify(savedControls));
+            alert(`Control de ${stepDetails[stepIndex+1].t} guardado correctamente. ${errorCount} errores detectados.`);
+            updateCharts();
+        }
+        
+        // --- FUNCIÓN PARA LIMPIAR DATOS ---
+        function clearSavedData() {
+            if (confirm("¿Estás seguro de que quieres borrar TODOS los controles guardados? Esta acción es irreversible.")) {
+                localStorage.removeItem('savedControls');
+                savedControls = []; 
+                updateCharts(); 
+                alert("Todos los datos de control han sido borrados. La tabla y gráficas están en cero.");
+            }
+        }
+
+        // --- Exportar a CSV ---
+        function exportToCSV() {
+            if (savedControls.length === 0) {
+                alert('No hay controles guardados.');
+                return;
+            }
+            const headers = ['ID', 'Etapa', 'Fecha', 'Proyecto', 'Ubicación', 'Errores', 'Observaciones'];
+            const rows = savedControls.map(c => [
+                c.id,
+                stepLabels[c.stepIndex],
+                c.fecha,
+                `"${c.proyecto}"`,
+                `"${c.ubicacion}"`,
+                `"${c.errores.join('; ')}"`,
+                `"${c.observaciones.replace(/"/g, '""').replace(/\n/g, ' ')}"`
+            ]);
+            const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'controles_aberturas.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // --- Actualizar gráficas ---
+        let errorCountChart, errorTrendChart;
+
+        function updateCharts() {
+            // --- GRÁFICA 1: CONTEO DE ERRORES POR ETAPA (Barras) ---
+            const errorCounts = Array(7).fill(0);
+            const errorDetails = Array(7).fill().map(() => ({}));
+
+            savedControls.forEach(ctrl => {
+                if (ctrl.hasError) {
+                    errorCounts[ctrl.stepIndex] += ctrl.errorCount; // Suma total de errores por etapa
+                    ctrl.errores.forEach(err => {
+                        errorDetails[ctrl.stepIndex][err] = (errorDetails[ctrl.stepIndex][err] || 0) + 1;
+                    });
+                }
+            });
+
+            if (errorCountChart) errorCountChart.destroy();
+            const ctx1 = document.getElementById('errorCountChart').getContext('2d');
+            errorCountChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: stepLabels,
+                    datasets: [{
+                        label: 'Errores detectados (total)',
+                        data: errorCounts,
+                        backgroundColor: '#ef4444',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                afterBody: function (tooltipItems) {
+                                    const idx = tooltipItems[0].dataIndex;
+                                    const details = errorDetails[idx];
+                                    const lines = Object.entries(details).map(([err, count]) => `${err.split(' - ')[1]}: ${count} veces`);
+                                    return lines.length ? ['Detalles de fallas:'].concat(lines) : [];
+                                }
+                            }
+                        },
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+
+            // --- GRÁFICA 2: TENDENCIA DE ERRORES POR ETAPA (Líneas) ---
+            
+            // 1. Organizar los datos por etapa (stepIndex) y ordenar por fecha
+            const controlsByStep = Array(7).fill().map(() => []);
+            savedControls.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenar por fecha
+            
+            savedControls.forEach(ctrl => {
+                controlsByStep[ctrl.stepIndex].push(ctrl);
+            });
+
+            // 2. Crear los datasets
+            let datasets = controlsByStep.map((controls, index) => {
+                const dataPoints = controls.map(ctrl => ({
+                    x: ctrl.fecha,
+                    y: ctrl.errorCount 
+                }));
+
+                return {
+                    label: stepLabels[index],
+                    data: dataPoints,
+                    borderColor: stepColors[index],
+                    backgroundColor: stepColors[index] + '40', 
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                };
+            });
+
+            // 3. Aseguramos que todas las etiquetas estén presentes (con o sin datos) para la leyenda
+            const existingLabels = datasets.map(d => d.label);
+            stepLabels.forEach((label, index) => {
+                if (!existingLabels.includes(label)) {
+                    datasets.push({
+                        label: label,
+                        data: [], 
+                        borderColor: stepColors[index],
+                        backgroundColor: stepColors[index] + '40',
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    });
+                }
+            });
+
+
+            // 4. Destruir la gráfica anterior y crear la nueva
+            if (errorTrendChart) errorTrendChart.destroy();
+            const ctx2 = document.getElementById('errorTrendChart').getContext('2d');
+            errorTrendChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Tendencia de Errores por Etapa a lo largo del tiempo'
+                        },
+                        legend: { 
+                            position: 'bottom',
+                            onClick: (e, legendItem, legend) => {
+                                const index = legendItem.datasetIndex;
+                                const ci = legend.chart;
+                                const datasetMeta = ci.getDatasetMeta(index);
+
+                                datasetMeta.hidden = datasetMeta.hidden === null ? !ci.data.datasets[index].hidden : null;
+                                
+                                ci.update();
+                            },
+                            labels: {
+                                generateLabels: (chart) => {
+                                    const data = chart.data;
+                                    return data.datasets.map((dataset, i) => ({
+                                        text: dataset.label,
+                                        fillStyle: dataset.backgroundColor,
+                                        strokeStyle: dataset.borderColor,
+                                        lineWidth: 3,
+                                        hidden: !chart.isDatasetVisible(i), 
+                                        index: i
+                                    }));
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day', 
+                                tooltipFormat: 'dd/MM/yy HH:mm'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Fecha y Hora del Control'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Cantidad de Errores Detectados'
+                            },
+                            ticks: {
+                                precision: 0 
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // --- Mostrar detalle y planilla ---
+        function showDetail(id) {
+            // activar nodo
+            document.querySelectorAll('.flow-node, .flow-diamond').forEach(n => n.classList.remove('active-node'));
+            const el = document.getElementById(`node-${id}`);
+            if (el) el.classList.add('active-node');
+
+            const step = stepDetails[id];
+            if (!step) return;
+
+            // Mostrar título y descripción
+            document.getElementById('detail-title').textContent = step.t;
+            document.getElementById('detail-desc').textContent = step.d;
+            document.getElementById('detail-extra').textContent = step.extra;
+
+            // Ocultar todas las planillas
+            document.querySelectorAll('[id^="control-sheet-"]').forEach(p => p.classList.add('hidden-planilla'));
+            document.getElementById('control-sheet-title').classList.add('hidden-planilla');
+
+            // Mostrar la planilla relevante
+            if (step.sheet) {
+                const sheet = document.getElementById(`control-sheet-${step.sheet}`);
+                if (sheet) {
+                    sheet.classList.remove('hidden-planilla');
+                    document.getElementById('control-sheet-title').classList.remove('hidden-planilla');
+                }
+            }
+        }
+
+        // Función para iniciar y actualizar las gráficas al cargar la página
+        function initFlow() {
+            // Recargar savedControls (que ahora estará vacío) o inicializarlo desde localStorage
+            savedControls = JSON.parse(localStorage.getItem('savedControls')) || [];
+
+            showDetail(0); // Mostrar el inicio por defecto
+            updateCharts();
+        }
+
+        // Cargar librería de Chart.js para manejo de tiempo
+        document.write('<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js "><\/script>');
+
+        window.onload = initFlow;
+
+    </script>
+</body>
+</html>
